@@ -123,8 +123,6 @@ export class AccountCache {
   private async _put(publicKey: PublicKey, data: AccountInfo<Buffer> | null) {
     const db = await this.getDb();
 
-    db.clear;
-
     await db.put("accounts", {
       publicKey: publicKey.toString(),
       data,
