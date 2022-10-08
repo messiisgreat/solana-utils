@@ -1,0 +1,9 @@
+# Ignore Mac OS noise
+.DS_Store
+
+dist
+
+# Ignore logs
+yarn-error.log
+
+node_modules

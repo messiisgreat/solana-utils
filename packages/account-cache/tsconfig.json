@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    // target
+    "target": "ES2019",
+    "module": "ES2022",
+
+    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+
+    // build
+    "types": [],
+    "esModuleInterop": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    // linting
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "noErrorTruncation": true,
+
+    // sources
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
+
+    "noEmit": true
+  },
+  "include": ["src/", "tests/"]
+}

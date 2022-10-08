@@ -1,0 +1,34 @@
+{
+  "name": "@nazaire/solana-utils",
+  "version": "1.0.0",
+  "keywords": [
+    "typescript",
+    "solana"
+  ],
+  "author": "Nazaire",
+  "license": "MIT",
+  "repository": "https://github.com/Nazaire/solana-utils.git",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "files": [
+    "dist/",
+    "src/"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "rm -fr dist/ && tsc -P tsconfig.cjs.json && tsc -P tsconfig.esm.json"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.63.1",
+    "dataloader": "^2.1.0",
+    "limiter": "^2.1.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.186",
+    "@types/node": "^18.8.3"
+  }
+}
