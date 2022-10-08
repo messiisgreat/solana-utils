@@ -141,12 +141,12 @@ export class AccountCache {
   // }
 
   async clear(publicKey: PublicKey) {
-    (await this.getDb()).delete("accounts", publicKey.toString());
+    await (await this.getDb()).delete("accounts", publicKey.toString());
     this._loader.clear({ publicKey, maxAge: 0 });
   }
 
   async clearAll() {
-    (await this.getDb()).clear("accounts");
+    await (await this.getDb()).clear("accounts");
     this._loader.clearAll();
   }
 }
