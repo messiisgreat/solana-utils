@@ -70,7 +70,7 @@ describe("Test cache", () => {
     // fake db entry
     await indexeddb.put("accounts", {
       publicKey: devnetAccount.string,
-      data: true,
+      data: { owner: devnetAccount.publicKey },
       ts: Date.now() - 5_000, // 5 seconds ago
     });
 
@@ -84,7 +84,7 @@ describe("Test cache", () => {
   it("not satisfies max age", async () => {
     await indexeddb.put("accounts", {
       publicKey: devnetAccount.string,
-      data: true,
+      data: { owner: devnetAccount.publicKey },
       ts: Date.now() - 30_000, // 30 seconds ago
     });
 
@@ -98,7 +98,7 @@ describe("Test cache", () => {
   it("in-memory cache", async () => {
     await indexeddb.put("accounts", {
       publicKey: devnetAccount.string,
-      data: "before",
+      data: { data: "before", owner: devnetAccount.publicKey },
       ts: Date.now(),
     });
 
@@ -108,7 +108,7 @@ describe("Test cache", () => {
     // overwrite cache
     await indexeddb.put("accounts", {
       publicKey: devnetAccount.string,
-      data: "after",
+      data: { data: "after", owner: devnetAccount.publicKey },
       ts: Date.now(),
     });
 
@@ -116,6 +116,6 @@ describe("Test cache", () => {
     const resultAfter = await cache.load(devnetAccount.publicKey, 10_000);
 
     chai.expect(totalRequestsMade).to.equal(0);
-    chai.expect(resultAfter).to.equal(resultBefore);
+    chai.expect(resultAfter.data).to.equal(resultBefore.data);
   });
 });

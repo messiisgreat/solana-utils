@@ -56,6 +56,7 @@ const serializeAccount = (
 const deserializeAccount = (
   data: SerializedAccountInfo | null
 ): AccountInfo<Buffer> | null => {
+  console.log("deserializeAccount", { data });
   if (!data) return null;
   return {
     ...data,
@@ -147,7 +148,7 @@ export class AccountCache {
   public async getDb() {
     if (this._db) return this._db;
     else
-      return (this._db = await openDB("solana-web-utils", 1, {
+      return (this._db = await openDB("solana-account-db", 1, {
         upgrade(db) {
           db.createObjectStore("accounts", {
             keyPath: "publicKey",
