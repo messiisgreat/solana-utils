@@ -30,6 +30,39 @@ class ExpiringAccountMap
   }
 }
 
+type SerializedAccountInfo = {
+  /** `true` if this account's data contains a loaded program */
+  executable: boolean;
+  /** Identifier of the program that owns the account */
+  owner: string;
+  /** Number of lamports assigned to the account */
+  lamports: number;
+  /** Optional data assigned to the account */
+  data: Buffer;
+  /** Optional rent epoch info for account */
+  rentEpoch?: number;
+};
+
+const serializeAccount = (
+  data: AccountInfo<Buffer> | null
+): SerializedAccountInfo | null => {
+  if (!data) return null;
+  return {
+    ...data,
+    owner: data.owner.toString(),
+  };
+};
+
+const deserializeAccount = (
+  data: SerializedAccountInfo | null
+): AccountInfo<Buffer> | null => {
+  if (!data) return null;
+  return {
+    ...data,
+    owner: new PublicKey(data.owner),
+  };
+};
+
 export class AccountCache {
   private _loader: DataLoader<[PublicKey, number], AccountInfo<Buffer> | null>;
 
@@ -62,7 +95,7 @@ export class AccountCache {
           const item = stored[i]!;
 
           if (item.value !== undefined) {
-            results[item.index] = item.value.data;
+            results[item.index] = item.value;
           } else {
             missing.push(item);
           }
@@ -104,7 +137,7 @@ export class AccountCache {
           key: string;
           value: {
             publicKey: string;
-            data: AccountInfo<Buffer> | null;
+            data: SerializedAccountInfo | null;
             ts: number;
           };
         };
@@ -123,12 +156,16 @@ export class AccountCache {
       }));
   }
 
-  private async _get(publicKey: PublicKey, maxAge: number) {
+  private async _get(
+    publicKey: PublicKey,
+    maxAge: number
+  ): Promise<AccountInfo<Buffer> | null | undefined> {
     const db = await this.getDb();
 
     const stored = await db.get("accounts", publicKey.toString());
 
-    if (stored && stored.ts > Date.now() - maxAge) return stored;
+    if (stored && stored.ts > Date.now() - maxAge)
+      return deserializeAccount(stored.data);
 
     return undefined;
   }
@@ -138,7 +175,7 @@ export class AccountCache {
 
     await db.put("accounts", {
       publicKey: publicKey.toString(),
-      data,
+      data: serializeAccount(data),
       ts: Date.now(),
     });
   }
