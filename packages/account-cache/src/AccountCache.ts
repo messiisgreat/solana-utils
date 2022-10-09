@@ -38,7 +38,7 @@ type SerializedAccountInfo = {
   /** Number of lamports assigned to the account */
   lamports: number;
   /** Optional data assigned to the account */
-  data: Buffer;
+  data: Uint8Array;
   /** Optional rent epoch info for account */
   rentEpoch?: number;
 };
@@ -56,10 +56,10 @@ const serializeAccount = (
 const deserializeAccount = (
   data: SerializedAccountInfo | null
 ): AccountInfo<Buffer> | null => {
-  console.log("deserializeAccount", { data });
   if (!data) return null;
   return {
     ...data,
+    data: Buffer.from(data.data),
     owner: new PublicKey(data.owner),
   };
 };

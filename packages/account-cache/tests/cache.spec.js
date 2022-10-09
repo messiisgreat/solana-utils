@@ -70,7 +70,7 @@ describe("Test cache", () => {
     // fake db entry
     await indexeddb.put("accounts", {
       publicKey: devnetAccount.string,
-      data: { owner: devnetAccount.publicKey },
+      data: { data: [], owner: devnetAccount.publicKey },
       ts: Date.now() - 5_000, // 5 seconds ago
     });
 
@@ -84,7 +84,7 @@ describe("Test cache", () => {
   it("not satisfies max age", async () => {
     await indexeddb.put("accounts", {
       publicKey: devnetAccount.string,
-      data: { owner: devnetAccount.publicKey },
+      data: { data: [], owner: devnetAccount.publicKey },
       ts: Date.now() - 30_000, // 30 seconds ago
     });
 
