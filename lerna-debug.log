@@ -1,0 +1,9 @@
+49 error Error: Command failed with exit code 1: git commit -m v1.0.0-alpha.0
+49 error On branch main
+49 error Your branch is up to date with 'origin/main'.
+49 error
+49 error nothing to commit, working tree clean
+49 error     at makeError (/Users/nazaire/Code/@nazaire/solana-utils/node_modules/execa/lib/error.js:60:11)
+49 error     at handlePromise (/Users/nazaire/Code/@nazaire/solana-utils/node_modules/execa/index.js:118:26)
+49 error     at processTicksAndRejections (node:internal/process/task_queues:96:5)
+49 error     at async Promise.all (index 0)
