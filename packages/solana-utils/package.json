@@ -1,6 +1,6 @@
 {
   "name": "@nazaire/solana-utils",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "keywords": [
     "typescript",
     "solana"
