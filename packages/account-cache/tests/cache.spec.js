@@ -15,6 +15,11 @@ describe("Test cache", () => {
     },
   });
 
+  const devnetAccount = {
+    string: "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo",
+    publicKey: new PublicKey("9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"),
+  };
+
   let cache = new AccountCache(connection);
 
   /** @type {IDBPDatabase} */
@@ -30,81 +35,46 @@ describe("Test cache", () => {
   });
 
   it("get account", async () => {
-    const result = await cache.load({
-      publicKey: new PublicKey("9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"),
-      maxAge: 10_000,
-    });
+    const result = await cache.load(devnetAccount.publicKey);
 
     chai.should().exist(result);
 
-    const record = await indexeddb.get(
-      "accounts",
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
+    const record = await indexeddb.get("accounts", devnetAccount.string);
 
     chai.should().exist(record);
   });
 
   it("account is cached", async () => {
-    const publicKey = new PublicKey(
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
+    const result = await cache.load(devnetAccount.publicKey);
 
-    const result = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
-
-    const result2 = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    const result2 = await cache.load(devnetAccount.publicKey);
 
     chai.expect(totalRequestsMade).to.equal(1);
   });
 
   it("clear cache", async () => {
-    const publicKey = new PublicKey(
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
+    const result = await cache.load(devnetAccount.publicKey);
 
-    const result = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    await cache.clear(devnetAccount.publicKey);
 
-    await cache.clear(publicKey);
-
-    const record = await indexeddb.get(
-      "accounts",
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
+    const record = await indexeddb.get("accounts", devnetAccount.string);
 
     chai.should().equal(record, undefined);
 
-    const result2 = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    const result2 = await cache.load(devnetAccount.publicKey);
 
     chai.expect(totalRequestsMade).to.equal(2);
   });
 
   it("satisfies max age", async () => {
-    const publicKey = new PublicKey(
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
-
+    // fake db entry
     await indexeddb.put("accounts", {
-      publicKey: "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo",
+      publicKey: devnetAccount.string,
       data: true,
-      ts: Date.now() - 5_000,
+      ts: Date.now() - 5_000, // 5 seconds ago
     });
 
-    const result = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    const result = await cache.load(devnetAccount.publicKey, 10_000);
 
     chai.should().exist(result);
 
@@ -112,20 +82,13 @@ describe("Test cache", () => {
   });
 
   it("not satisfies max age", async () => {
-    const publicKey = new PublicKey(
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
-
     await indexeddb.put("accounts", {
-      publicKey: "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo",
+      publicKey: devnetAccount.string,
       data: true,
-      ts: Date.now() - 30_000,
+      ts: Date.now() - 30_000, // 30 seconds ago
     });
 
-    const result = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    const result = await cache.load(devnetAccount.publicKey, 10_000);
 
     chai.should().exist(result);
 
@@ -133,32 +96,24 @@ describe("Test cache", () => {
   });
 
   it("in-memory cache", async () => {
-    const publicKey = new PublicKey(
-      "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"
-    );
-
     await indexeddb.put("accounts", {
-      publicKey: "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo",
+      publicKey: devnetAccount.string,
       data: "before",
       ts: Date.now(),
     });
 
-    // it will stay in in-memory cache now
-    const resultBefore = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    // loader will store in mem cache
+    const resultBefore = await cache.load(devnetAccount.publicKey);
 
+    // overwrite cache
     await indexeddb.put("accounts", {
-      publicKey: "9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo",
+      publicKey: devnetAccount.string,
       data: "after",
       ts: Date.now(),
     });
 
-    const resultAfter = await cache.load({
-      publicKey,
-      maxAge: 10_000,
-    });
+    // should return the value from mem cache and not the database
+    const resultAfter = await cache.load(devnetAccount.publicKey, 10_000);
 
     chai.expect(totalRequestsMade).to.equal(0);
     chai.expect(resultAfter).to.equal(resultBefore);

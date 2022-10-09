@@ -1,14 +1,37 @@
 import { AccountLoader } from "@nazaire/account-loader";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
-import DataLoader from "dataloader";
+import DataLoader, { CacheMap } from "dataloader";
 import { IDBPDatabase, openDB } from "idb";
 
+class ExpiringAccountMap
+  implements CacheMap<[PublicKey, number], Promise<AccountInfo<Buffer> | null>>
+{
+  private _map = new Map<
+    string,
+    [Promise<AccountInfo<Buffer> | null>, number]
+  >();
+
+  get(key: [PublicKey, number]) {
+    const value = this._map.get(key[0].toString());
+    if (value && value[1] > Date.now() - key[1]) return value[0];
+    return undefined;
+  }
+
+  set(key: [PublicKey, number], value: Promise<AccountInfo<Buffer> | null>) {
+    this._map.set(key[0].toString(), [value, Date.now()]);
+  }
+
+  delete(key: [PublicKey, number]) {
+    this._map.delete(key[0].toString());
+  }
+
+  clear() {
+    this._map.clear();
+  }
+}
+
 export class AccountCache {
-  private _loader: DataLoader<
-    { publicKey: PublicKey; maxAge: number },
-    AccountInfo<Buffer> | null,
-    string
-  >;
+  private _loader: DataLoader<[PublicKey, number], AccountInfo<Buffer> | null>;
 
   constructor(
     public readonly connection: Connection,
@@ -19,20 +42,16 @@ export class AccountCache {
       cache: false,
     })
   ) {
-    this._loader = new DataLoader<
-      { publicKey: PublicKey; maxAge: number },
-      AccountInfo<Buffer> | null,
-      string
-    >(
+    this._loader = new DataLoader(
       async (keys) => {
         const results: (AccountInfo<Buffer> | null | Error)[] = [];
 
         const stored = await Promise.all(
-          keys.map(async (key, index) => {
+          keys.map(async ([publicKey, age], index) => {
             return {
-              publicKey: key.publicKey,
+              publicKey: publicKey,
               index,
-              value: await this._get(key),
+              value: await this._get(publicKey, age),
             };
           })
         );
@@ -74,7 +93,7 @@ export class AccountCache {
         return results;
       },
       {
-        cacheKeyFn: ({ publicKey }) => publicKey.toString(),
+        cacheMap: new ExpiringAccountMap(),
       }
     );
   }
@@ -104,13 +123,7 @@ export class AccountCache {
       }));
   }
 
-  private async _get({
-    publicKey,
-    maxAge,
-  }: {
-    publicKey: PublicKey;
-    maxAge: number;
-  }) {
+  private async _get(publicKey: PublicKey, maxAge: number) {
     const db = await this.getDb();
 
     const stored = await db.get("accounts", publicKey.toString());
@@ -130,8 +143,8 @@ export class AccountCache {
     });
   }
 
-  load(publicKey: PublicKey, opts: { maxAge: number }) {
-    return this._loader.load({ publicKey, maxAge: opts.maxAge });
+  load(publicKey: PublicKey, maxAge: number = Infinity) {
+    return this._loader.load([publicKey, maxAge]);
   }
 
   // loadMany(queries: { publicKey: PublicKey; maxAge: number }[]) {
@@ -139,12 +152,14 @@ export class AccountCache {
   // }
 
   async clear(publicKey: PublicKey) {
-    await (await this.getDb()).delete("accounts", publicKey.toString());
-    this._loader.clear({ publicKey, maxAge: 0 });
+    await this.getDb().then((db) =>
+      db.delete("accounts", publicKey.toString())
+    );
+    this._loader.clear([publicKey, 0]);
   }
 
   async clearAll() {
-    await (await this.getDb()).clear("accounts");
+    await this.getDb().then((db) => db.clear("accounts"));
     this._loader.clearAll();
   }
 }
