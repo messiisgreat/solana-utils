@@ -66,5 +66,5 @@ export function createGetConnection(config: {
     });
   };
 
-  return { getConnection, getClusterApiUrl };
+  return { getConnection, getClusterApiUrl, defaultCluster };
 }
