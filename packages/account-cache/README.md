@@ -13,7 +13,7 @@ Load strategy:
 ## Usage
 
 ```
-const cache = new AccountCache(cluster, connection, {
+const accounts = new AccountCache(cluster, connection, {
   // from @solana/spl-token
   token: (account, pubkey) => unpackAccount(pubkey, account),
 
@@ -25,13 +25,13 @@ const cache = new AccountCache(cluster, connection, {
     parseMetadataAccount(Object.assign({ publicKey: pubkey }, account)),
 });
 
-const mint = await cache.load(mintPk, "mint")
-const token = await cache.load(tokenPk, "token")
+const mint = await accounts.load(mintPk, "mint")
+const token = await accounts.load(tokenPk, "token")
 
 // utilise batching with concurrent promises
 
 const [mint, token] = await Promise.all([
-  cache.load(mintPk, "mint"),
-  cache.load(tokenPk, "token")
+  accounts.load(mintPk, "mint"),
+  accounts.load(tokenPk, "token")
 ])
 ```
