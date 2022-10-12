@@ -1,6 +1,6 @@
 {
   "name": "@nazaire/account-cache",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "keywords": [
     "typescript",
     "solana"
@@ -23,7 +23,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "@nazaire/account-loader": "^1.0.0-alpha.1",
+    "@nazaire/account-loader": "^1.0.0-alpha.6",
     "@solana/web3.js": "^1.63.1",
     "dataloader": "^2.1.0",
     "idb": "^7.1.0"
