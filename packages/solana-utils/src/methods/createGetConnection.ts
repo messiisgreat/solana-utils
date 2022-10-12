@@ -21,7 +21,7 @@ export type GetConnectionConfig = {
  */
 export function createGetConnection(config: {
   defaultCluster?: Cluster;
-  clusterUrlDefaults?: { [P in Cluster]: string };
+  clusterUrlDefaults?: { [P in Cluster]?: string };
 }) {
   const defaultCluster = config.defaultCluster || "devnet";
   const getClusterApiUrl = (value: Cluster = defaultCluster) => {
