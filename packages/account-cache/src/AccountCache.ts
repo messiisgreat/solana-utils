@@ -2,6 +2,7 @@ import { AccountLoader } from "@nazaire/account-loader";
 import { AccountInfo, Cluster, Connection, PublicKey } from "@solana/web3.js";
 import DataLoader, { CacheMap } from "dataloader";
 import { IDBPDatabase, openDB } from "idb";
+import { catchAsValue } from "./utils";
 
 class ExpiringAccountMap
   implements CacheMap<[PublicKey, number], Promise<AccountInfo<Buffer> | null>>
@@ -82,7 +83,10 @@ export class AccountCache<AccountParsers extends {}> {
   };
 
   constructor(
-    public readonly cluster: Cluster,
+    /**
+     * Provide the current cluster the accounts are sourced from
+     */
+    public readonly cluster: string,
     public readonly connection: Connection,
     /**
      * Define account parsers
@@ -210,12 +214,12 @@ export class AccountCache<AccountParsers extends {}> {
     publicKey: PublicKey,
     type: K,
     maxAge?: number
-  ): Promise<AccountParsers[K] | null>;
+  ): Promise<AccountParsers[K] | Error | null>;
   async load<K extends keyof AccountParsers>(
     publicKey: PublicKey,
     type: undefined,
     maxAge?: number
-  ): Promise<AccountInfo<Buffer> | null>;
+  ): Promise<AccountInfo<Buffer> | Error | null>;
   async load(
     publicKey: PublicKey,
     type?: keyof AccountParsers,
@@ -224,7 +228,7 @@ export class AccountCache<AccountParsers extends {}> {
     const account = await this._loader.load([publicKey, maxAge]);
     if (!account) return null;
     if (!type) return account;
-    return this._parsers[type](account, publicKey);
+    return catchAsValue(() => this._parsers[type](account, publicKey));
   }
 
   // loadMany(queries: { publicKey: PublicKey; maxAge: number }[]) {
