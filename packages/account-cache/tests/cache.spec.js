@@ -20,7 +20,7 @@ describe("Test cache", () => {
     publicKey: new PublicKey("9nZAY25ud4HA5yMMpS73bWmBLi5UNBs7PaCb5uwbWVeo"),
   };
 
-  let cache = new AccountCache(connection);
+  let cache = new AccountCache("devnet", connection);
 
   /** @type {IDBPDatabase} */
   let indexeddb;
@@ -35,7 +35,7 @@ describe("Test cache", () => {
   });
 
   it("get account", async () => {
-    const result = await cache.load(devnetAccount.publicKey);
+    const result = await cache.load(devnetAccount.publicKey, undefined);
 
     chai.should().exist(result);
 
@@ -45,15 +45,15 @@ describe("Test cache", () => {
   });
 
   it("account is cached", async () => {
-    const result = await cache.load(devnetAccount.publicKey);
+    const result = await cache.load(devnetAccount.publicKey, undefined);
 
-    const result2 = await cache.load(devnetAccount.publicKey);
+    const result2 = await cache.load(devnetAccount.publicKey, undefined);
 
     chai.expect(totalRequestsMade).to.equal(1);
   });
 
   it("clear cache", async () => {
-    const result = await cache.load(devnetAccount.publicKey);
+    const result = await cache.load(devnetAccount.publicKey, undefined);
 
     await cache.clear(devnetAccount.publicKey);
 
@@ -61,7 +61,7 @@ describe("Test cache", () => {
 
     chai.should().equal(record, undefined);
 
-    const result2 = await cache.load(devnetAccount.publicKey);
+    const result2 = await cache.load(devnetAccount.publicKey, undefined, null);
 
     chai.expect(totalRequestsMade).to.equal(2);
   });
@@ -74,7 +74,7 @@ describe("Test cache", () => {
       ts: Date.now() - 5_000, // 5 seconds ago
     });
 
-    const result = await cache.load(devnetAccount.publicKey, 10_000);
+    const result = await cache.load(devnetAccount.publicKey, undefined, 10_000);
 
     chai.should().exist(result);
 
@@ -88,7 +88,7 @@ describe("Test cache", () => {
       ts: Date.now() - 30_000, // 30 seconds ago
     });
 
-    const result = await cache.load(devnetAccount.publicKey, 10_000);
+    const result = await cache.load(devnetAccount.publicKey, undefined, 10_000);
 
     chai.should().exist(result);
 
@@ -103,7 +103,7 @@ describe("Test cache", () => {
     });
 
     // loader will store in mem cache
-    const resultBefore = await cache.load(devnetAccount.publicKey);
+    const resultBefore = await cache.load(devnetAccount.publicKey, undefined);
 
     // overwrite cache
     await indexeddb.put("accounts", {
@@ -113,7 +113,11 @@ describe("Test cache", () => {
     });
 
     // should return the value from mem cache and not the database
-    const resultAfter = await cache.load(devnetAccount.publicKey, 10_000);
+    const resultAfter = await cache.load(
+      devnetAccount.publicKey,
+      undefined,
+      10_000
+    );
 
     chai.expect(totalRequestsMade).to.equal(0);
     chai.expect(resultAfter.data).to.equal(resultBefore.data);

@@ -1,5 +1,5 @@
 import { AccountLoader } from "@nazaire/account-loader";
-import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Cluster, Connection, PublicKey } from "@solana/web3.js";
 import DataLoader, { CacheMap } from "dataloader";
 import { IDBPDatabase, openDB } from "idb";
 
@@ -64,18 +64,37 @@ const deserializeAccount = (
   };
 };
 
-export class AccountCache {
+export class AccountCache<AccountParsers extends {}> {
   private _loader: DataLoader<[PublicKey, number], AccountInfo<Buffer> | null>;
 
+  /**
+   * An Account DataLoader with no in-memory cache
+   */
+  private _rpcLoader = new AccountLoader(this.connection, {
+    cache: false,
+  });
+
+  private _parsers: {
+    [K in keyof AccountParsers]: (
+      account: AccountInfo<Buffer>,
+      publicKey: PublicKey
+    ) => AccountParsers[K];
+  };
+
   constructor(
+    public readonly cluster: Cluster,
     public readonly connection: Connection,
     /**
-     * An Account DataLoader with no in-memory cache
+     * Define account parsers
      */
-    private _rpcLoader = new AccountLoader(connection, {
-      cache: false,
-    })
+    parsers: {
+      [K in keyof AccountParsers]: (
+        account: AccountInfo<Buffer>,
+        publicKey: PublicKey
+      ) => AccountParsers[K];
+    }
   ) {
+    this._parsers = { ...parsers };
     this._loader = new DataLoader(
       async (keys) => {
         const results: (AccountInfo<Buffer> | null | Error)[] = [];
@@ -148,7 +167,7 @@ export class AccountCache {
   public async getDb() {
     if (this._db) return this._db;
     else
-      return (this._db = await openDB("solana-account-db", 1, {
+      return (this._db = await openDB(`solana_${this.cluster}_accounts`, 1, {
         upgrade(db) {
           db.createObjectStore("accounts", {
             keyPath: "publicKey",
@@ -181,8 +200,31 @@ export class AccountCache {
     });
   }
 
-  load(publicKey: PublicKey, maxAge: number = Infinity) {
-    return this._loader.load([publicKey, maxAge]);
+  /**
+   * Load an account
+   * @param publicKey The public key of the account to load
+   * @param type The parsing function to use, or use `undefined` to return the account unparsed
+   * @param maxAge Only return cached items less than the maxAge, defaults to `Infinity`
+   */
+  async load<K extends keyof AccountParsers>(
+    publicKey: PublicKey,
+    type: K,
+    maxAge?: number
+  ): Promise<AccountParsers[K] | null>;
+  async load<K extends keyof AccountParsers>(
+    publicKey: PublicKey,
+    type: undefined,
+    maxAge?: number
+  ): Promise<AccountInfo<Buffer> | null>;
+  async load(
+    publicKey: PublicKey,
+    type?: keyof AccountParsers,
+    maxAge: number = Infinity
+  ) {
+    const account = await this._loader.load([publicKey, maxAge]);
+    if (!account) return null;
+    if (!type) return account;
+    return this._parsers[type](account, publicKey);
   }
 
   // loadMany(queries: { publicKey: PublicKey; maxAge: number }[]) {
