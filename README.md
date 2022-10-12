@@ -1,12 +1,9 @@
 # solana-utils
 
-WIP
+## Packages
 
-### account-loader
-A DataLoader for fetching Accounts
-
-### account-cache
-A cache implementation leveraging indexedDB and DataLoader for storing Account data locally on a users device.
-
-### solana-utils
-Common utilities for working with the solana blockchain
+| Package                       | Description                              | Version                                                                                                                           | Docs                                                                                                             |
+| :---------------------------- | :--------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| `@nazaire/account-loader`         | Account DataLoader for batching getAccountInfo requests | ![npm](https://img.shields.io/npm/v/@nazaire/account-loader.svg)               | Coming soon      |
+| `@nazaire/account-cache` | IndexedDB Account cache for browsers | ![npm](https://img.shields.io/npm/v/@nazaire/account-cache.svg) | Coming soon |
+| `@nazaire/solana-utils`           | General utilities         | ![npm](https://img.shields.io/npm/v/@nazaire/solana-utils.svg)                   | Coming soon     |
