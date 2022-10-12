@@ -1,4 +1,4 @@
-import { AccountLoader } from "@nazaire/account-loader";
+import { AccountLoader, AccountParsersMap } from "@nazaire/account-loader";
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import DataLoader, { CacheMap } from "dataloader";
 import { IDBPDatabase, openDB } from "idb";
@@ -75,12 +75,7 @@ export class AccountCache<AccountParsers extends {}> {
     cache: false,
   });
 
-  private _parsers: {
-    [K in keyof AccountParsers]: (
-      account: AccountInfo<Buffer>,
-      publicKey: PublicKey
-    ) => AccountParsers[K];
-  };
+  private _parsers: AccountParsersMap<AccountParsers>;
 
   constructor(
     /**
@@ -91,12 +86,7 @@ export class AccountCache<AccountParsers extends {}> {
     /**
      * Define account parsers
      */
-    parsers: {
-      [K in keyof AccountParsers]: (
-        account: AccountInfo<Buffer>,
-        publicKey: PublicKey
-      ) => AccountParsers[K];
-    }
+    parsers: AccountParsersMap<AccountParsers>
   ) {
     this._parsers = { ...parsers };
     this._loader = new DataLoader(
