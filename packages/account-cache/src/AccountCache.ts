@@ -1,5 +1,5 @@
 import { AccountLoader } from "@nazaire/account-loader";
-import { AccountInfo, Cluster, Connection, PublicKey } from "@solana/web3.js";
+import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import DataLoader, { CacheMap } from "dataloader";
 import { IDBPDatabase, openDB } from "idb";
 import { catchAsValue } from "./utils";
