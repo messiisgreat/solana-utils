@@ -19,10 +19,19 @@ export class ParsedAccountLoader<AccountParsers extends {}> {
   /**
    * Loads a key, returning a `Promise` for the value represented by that key.
    */
-  async load<T extends keyof AccountParsers | undefined>(
+  async load<K extends keyof AccountParsers>(
     publicKey: PublicKey,
-    type: T
-  ) {
+    type: K
+  ): Promise<AccountParsers[K] | null>;
+  async load(
+    publicKey: PublicKey,
+    type: undefined
+  ): Promise<AccountInfo<Buffer> | null>;
+  async load<K extends keyof AccountParsers>(
+    publicKey: PublicKey,
+    type: K | undefined
+  ): Promise<AccountParsers[K] | AccountInfo<Buffer> | null>;
+  async load(publicKey: PublicKey, type?: keyof AccountParsers) {
     const account = await this._loader.load(publicKey);
     if (!account) return null;
     if (type) return this._parsers[type](account, publicKey);
